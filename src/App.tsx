@@ -3,6 +3,7 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import { NeuralNetwork } from './components/NeuralNetwork'
 import { MemorySphere } from './components/MemorySphere'
+import { Effects } from './components/Effects'
 
 // Camera rig that responds to scroll and mouse
 function CameraRig() {
@@ -16,9 +17,9 @@ function CameraRig() {
       const maxScroll = document.documentElement.scrollHeight - window.innerHeight
       const scrollProgress = scrollY / maxScroll
       
-      // Move camera back as user scrolls
-      targetY.current = -scrollProgress * 3
-      targetZ.current = 15 + scrollProgress * 5
+      // Move camera as user scrolls
+      targetY.current = -scrollProgress * 4
+      targetZ.current = 15 + scrollProgress * 8
     }
     
     window.addEventListener('scroll', handleScroll)
@@ -33,7 +34,7 @@ function CameraRig() {
     // Subtle mouse parallax
     camera.position.x = THREE.MathUtils.lerp(
       camera.position.x, 
-      state.pointer.x * 0.5, 
+      state.pointer.x * 0.8, 
       delta * 2
     )
     camera.lookAt(0, targetY.current, 0)
@@ -42,17 +43,18 @@ function CameraRig() {
   return null
 }
 
-// Main 3D Scene - simplified, no post-processing
+// Main 3D Scene
 function Scene() {
   return (
     <>
-      <color attach="background" args={['#f5f5f7']} />
-      <fog attach="fog" args={['#f5f5f7', 15, 35]} />
+      <color attach="background" args={['#faf8f5']} />
+      <fog attach="fog" args={['#faf8f5', 15, 40]} />
       
       <ambientLight intensity={0.8} />
-      <directionalLight position={[5, 5, 5]} intensity={0.6} color="#ffffff" />
-      <pointLight position={[10, 10, 10]} intensity={0.4} color="#0066cc" />
-      <pointLight position={[-10, -10, -5]} intensity={0.3} color="#8e44ad" />
+      <directionalLight position={[5, 5, 5]} intensity={0.5} color="#ffffff" />
+      <pointLight position={[10, 10, 10]} intensity={0.4} color="#0077cc" />
+      <pointLight position={[-10, -10, -5]} intensity={0.3} color="#8b5cf6" />
+      <pointLight position={[0, -5, 5]} intensity={0.2} color="#0077cc" />
       
       <CameraRig />
       
@@ -61,6 +63,9 @@ function Scene() {
       
       {/* Central memory sphere */}
       <MemorySphere />
+
+      {/* Post-processing effects */}
+      <Effects />
     </>
   )
 }
@@ -82,7 +87,7 @@ function Content() {
           }
         })
       },
-      { threshold: 0.2 }
+      { threshold: 0.15 }
     )
 
     Object.values(sectionRefs.current).forEach((el) => {
@@ -112,15 +117,15 @@ function Content() {
         <div className="scroll-prompt">Scroll to Enter</div>
       </section>
 
-      {/* MANIFESTO */}
+      {/* MANIFESTO / THE HOOK */}
       <section 
         id="manifesto" 
         ref={setRef('manifesto')} 
         className="section manifesto"
         style={{
           opacity: visible['manifesto'] ? 1 : 0,
-          transform: visible['manifesto'] ? 'translateY(0)' : 'translateY(40px)',
-          transition: 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
+          transform: visible['manifesto'] ? 'translateY(0)' : 'translateY(50px)',
+          transition: 'all 1s cubic-bezier(0.4, 0, 0.2, 1)'
         }}
       >
         <div className="container">
@@ -128,83 +133,94 @@ function Content() {
             <span className="year-badge">Scenario: January 7, 2030</span>
             <h2>The Archive of Feeling</h2>
             <p>
-              In the late 2020s, we realized that while we were archiving <strong>data</strong>, we were losing <strong>context</strong>. 
-              The "Memory Market" of 2026 was a crude concept of trading experiences. By 2030, we evolved. 
-              We don't sell memories; we save them. Mnemosyne is a reaction against the "flatness" of digital archives. 
-              We use spatial computing to grant dignity to the aging and the forgotten.
+              For years, we've been archiving <strong>petabytes of human data</strong> every day. 
+              Photos, videos, documents—but we realized something terrifying: 
+              we were saving the <strong>data</strong>, but losing the <strong>feeling</strong>.
+            </p>
+            <p style={{ marginTop: '1.5rem' }}>
+              In 2026, the concept of a "Memory Market" emerged—a crude idea of trading experiences. 
+              But memories shouldn't be a <strong>commodity to be sold</strong>. 
+              They are a <strong>heritage to be saved</strong>.
             </p>
           </div>
         </div>
       </section>
 
-      {/* PROCESS */}
+      {/* PROCESS MODEL */}
       <section 
         id="process" 
         ref={setRef('process')} 
         className="section process"
         style={{
           opacity: visible['process'] ? 1 : 0,
-          transform: visible['process'] ? 'translateY(0)' : 'translateY(40px)',
-          transition: 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.1s'
+          transform: visible['process'] ? 'translateY(0)' : 'translateY(50px)',
+          transition: 'all 1s cubic-bezier(0.4, 0, 0.2, 1) 0.1s'
         }}
       >
         <div className="container">
           <div className="section-header">
             <h2>The Process Model</h2>
-            <p>Adapting 'Inside the Box' Methodology</p>
+            <p>Adapting the "Inside the Box" Methodology</p>
           </div>
 
           <div className="process-grid">
-            {/* Step 1 */}
+            {/* Step 1: Extraction */}
             <div 
               className="glass-card process-card"
               style={{
-                transitionDelay: '0.2s'
+                opacity: visible['process'] ? 1 : 0,
+                transform: visible['process'] ? 'translateY(0)' : 'translateY(30px)',
+                transition: 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.2s'
               }}
             >
               <div className="step-number">01</div>
               <span className="role-tag">Role: The Forensic Listener (Human)</span>
               <h3>Extraction</h3>
               <p>
-                Deep-dive interviews with the subject. We collect audio recordings, 
-                old photographs, and crucial sensory descriptors (smells, textures) 
-                to establish an emotional baseline.
+                Deep-dive interviews with the subject. We don't just scan a brain—we collect 
+                sensory triggers: the <strong>smell of a specific bakery</strong>, 
+                the <strong>texture of a childhood blanket</strong>. 
+                This requires high Emotional Intelligence.
               </p>
               <span className="intelligence-tag">Intelligence: Emotional & Interpersonal</span>
             </div>
 
-            {/* Step 2 */}
+            {/* Step 2: Synthesis */}
             <div 
               className="glass-card process-card"
               style={{
-                transitionDelay: '0.35s'
+                opacity: visible['process'] ? 1 : 0,
+                transform: visible['process'] ? 'translateY(0)' : 'translateY(30px)',
+                transition: 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.35s'
               }}
             >
               <div className="step-number">02</div>
               <span className="role-tag">Role: The Neural Architect (AI Agent)</span>
               <h3>Synthesis</h3>
               <p>
-                Procedural generation of 3D environments. Using Neural Radiance Fields (NeRFs) 
-                and Ray Tracing to fill in visual gaps. The AI calculates the physics of light 
-                to recreate the "feeling" of the memory.
+                Procedural generation of 3D environments using <strong>Neural Radiance Fields (NeRFs)</strong> and 
+                <strong> Ray Tracing</strong>. The AI calculates the physics of light 
+                to recreate the <strong>atmosphere</strong> of the memory, not just the geometry.
               </p>
               <span className="intelligence-tag">Intelligence: Pattern Recognition & Spatial Logic</span>
             </div>
 
-            {/* Step 3 */}
+            {/* Step 3: Immersion */}
             <div 
               className="glass-card process-card"
               style={{
-                transitionDelay: '0.5s'
+                opacity: visible['process'] ? 1 : 0,
+                transform: visible['process'] ? 'translateY(0)' : 'translateY(30px)',
+                transition: 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.5s'
               }}
             >
               <div className="step-number">03</div>
               <span className="role-tag">Role: The Guide (Human + AI)</span>
               <h3>Immersion</h3>
               <p>
-                The subject enters the simulation via Haptic VR. They revisit their 
-                childhood home or a lost moment of joy. The goal is not just viewing, 
-                but cognitive therapy and emotional closure.
+                The subject enters the simulation via <strong>Haptic VR</strong>. They revisit their 
+                childhood home or a lost moment of joy. This isn't entertainment—it is 
+                <strong> cognitive therapy</strong> providing closure and comfort.
               </p>
               <span className="intelligence-tag">Intelligence: Kinaesthetic & Intrapersonal</span>
             </div>
@@ -212,15 +228,15 @@ function Content() {
         </div>
       </section>
 
-      {/* ETHICS */}
+      {/* ETHICS & IMPACT */}
       <section 
         id="ethics" 
         ref={setRef('ethics')} 
         className="section ethics"
         style={{
           opacity: visible['ethics'] ? 1 : 0,
-          transform: visible['ethics'] ? 'translateY(0)' : 'translateY(40px)',
-          transition: 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
+          transform: visible['ethics'] ? 'translateY(0)' : 'translateY(50px)',
+          transition: 'all 1s cubic-bezier(0.4, 0, 0.2, 1)'
         }}
       >
         <div className="container">
@@ -230,7 +246,7 @@ function Content() {
                 <h2>Ethics & Impact</h2>
                 <p>
                   As we bridge the gap between <strong>Care Work</strong> and <strong>Creative Tech</strong>, 
-                  we face new challenges. The "Coder" is no longer isolated; they are a custodian of human history.
+                  we face serious ethical challenges. As designers in 2030, we must ask difficult questions.
                 </p>
               </div>
               
@@ -238,20 +254,49 @@ function Content() {
                 <div className="challenge-item">
                   <h4>Truth vs. Comfort</h4>
                   <p>
-                    If the AI "hallucinates" a detail that makes the memory happier but less accurate, 
-                    do we keep it? We prioritize <strong>Integrity</strong> over entertainment.
+                    If the AI "hallucinates" a detail—making the weather sunny in a memory that was actually rainy—is that a lie? 
+                    Or is it <strong>therapeutic mercy</strong>? We must decide: are we documentarians or therapists?
                   </p>
                 </div>
                 
                 <div className="challenge-item">
                   <h4>Inequality & Access</h4>
                   <p>
-                    Will rich people buy "happier" childhoods? We operate on a <strong>"Public Stack"</strong> model—open-source 
-                    archives for educational use subsidize private therapy.
+                    We cannot allow high-fidelity memory preservation to become a luxury for the rich. 
+                    We operate on a <strong>"Public Stack"</strong> model—open-source archives for educational use 
+                    subsidize private therapy sessions.
                   </p>
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CONCLUSION */}
+      <section 
+        id="conclusion" 
+        ref={setRef('conclusion')} 
+        className="section conclusion"
+        style={{
+          opacity: visible['conclusion'] ? 1 : 0,
+          transform: visible['conclusion'] ? 'translateY(0)' : 'translateY(50px)',
+          transition: 'all 1s cubic-bezier(0.4, 0, 0.2, 1)'
+        }}
+      >
+        <div className="container">
+          <div className="glass-card conclusion-card">
+            <h2>The Future of Memory</h2>
+            <p>
+              The transformation of labor in the 2030s isn't just about robots taking jobs. 
+              It's about humans moving into roles that require <strong>deep empathy</strong>, 
+              supported by AI that handles the heavy computational lifting.
+            </p>
+            <p>
+              Mnemosyne is a proposal for that future. A future where we use our 
+              <strong> most advanced technology</strong> to protect our <strong>most fragile possession</strong>: 
+              <em> our past</em>.
+            </p>
           </div>
         </div>
       </section>
@@ -263,7 +308,7 @@ function Content() {
         className="section footer"
         style={{
           opacity: visible['footer'] ? 1 : 0,
-          transition: 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
+          transition: 'all 1s cubic-bezier(0.4, 0, 0.2, 1)'
         }}
       >
         <div className="container">
@@ -289,7 +334,7 @@ export default function App() {
             powerPreference: 'high-performance',
             preserveDrawingBuffer: true
           }}
-          dpr={1}
+          dpr={[1, 1.5]}
           frameloop="always"
         >
           <Suspense fallback={null}>
