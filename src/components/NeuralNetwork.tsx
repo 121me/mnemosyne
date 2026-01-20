@@ -1,6 +1,6 @@
 import { useRef, useMemo } from 'react'
 import { useFrame } from '@react-three/fiber'
-import { Sparkles, Line, Float } from '@react-three/drei'
+import { Sparkles, Line } from '@react-three/drei'
 import * as THREE from 'three'
 
 // Neural node that floats and pulses
