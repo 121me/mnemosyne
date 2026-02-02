@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ANAMNESE - Project Poster (Light Mode)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Space+Grotesk:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #ffffff;
+            --text-main: #000000;
+            --accent-cyan: #008ba3; /* Darker cyan for visibility on white */
+            --accent-purple: #8000b0; /* Darker purple for visibility */
+            --poster-width: 800px; 
+            --poster-height: 1131px; 
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        body {
+            background-color: #f0f0f0; /* Light gray backdrop for screen viewing */
+            color: var(--text-main);
+            font-family: 'Space Grotesk', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        /* Poster Container */
+        .poster-container {
+            width: var(--poster-width);
+            height: var(--poster-height);
+            background-color: var(--bg-color);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15); /* Softer shadow */
+            border: 1px solid #000; /* Sharp black border */
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Grain Overlay - Adjusted for Light Mode */
+        .grain {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            /* SVG Noise */
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='1'/%3E%3C/svg%3E");
+            z-index: 10;
+            opacity: 0.15;
+            mix-blend-mode: multiply; /* Multiply makes noise visible on white */
+        }
+
+        /* Header Section */
+        header {
+            padding: 4rem 3rem 2rem;
+            text-align: center;
+            border-bottom: 3px solid #000;
+            position: relative;
+        }
+
+        h1 {
+            font-family: 'Cinzel', serif;
+            font-size: 5.5rem;
+            font-weight: 900;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: #000;
+            margin-bottom: 0.5rem;
+            position: relative;
+            z-index: 2;
+            /* Subtle gray shadow for depth */
+            text-shadow: 3px 3px 0px #eee;
+        }
+
+        /* Frozen Glitch Effect - Inverted */
+        h1::before {
+            content: 'ANAMNESE';
+            position: absolute;
+            left: 4px;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            color: var(--accent-cyan);
+            overflow: hidden;
+            clip-path: polygon(0 45%, 100% 45%, 100% 55%, 0 55%);
+            opacity: 0.8;
+            z-index: -1;
+            /* Multiply works better for "ink" look on white */
+            mix-blend-mode: multiply;
+        }
+
+        .subtitle {
+            font-family: 'Space Grotesk', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 0.4em;
+            font-size: 1.2rem;
+            color: var(--accent-cyan);
+            margin-top: 1rem;
+            font-weight: 700;
+        }
+
+        /* Visual Areas */
+        .visual-area {
+            width: 100%;
+            height: 380px;
+            background-color: #fcfcfc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            border-bottom: 3px solid #000;
+            overflow: hidden;
+        }
+
+        .visual-placeholder {
+            width: 100%;
+            height: 100%;
+            /* Light gray grid pattern */
+            background: 
+                linear-gradient(45deg, transparent 48%, #ddd 49%, #ddd 51%, transparent 52%),
+                linear-gradient(-45deg, transparent 48%, #ddd 49%, #ddd 51%, transparent 52%);
+            background-size: 30px 30px;
+            opacity: 0.5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .visual-label {
+            position: absolute;
+            background: #fff;
+            border: 2px solid #000;
+            color: #000;
+            padding: 1rem 2rem;
+            font-family: 'Space Grotesk', monospace;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            z-index: 5;
+            font-weight: bold;
+            box-shadow: 4px 4px 0px #000;
+        }
+
+        /* Content Section */
+        .content {
+            padding: 4rem 3rem;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+            flex-grow: 1;
+        }
+
+        .hook-text {
+            font-family: 'Cinzel', serif;
+            font-size: 2.2rem;
+            line-height: 1.4;
+            color: #000;
+            border-left: 6px solid var(--accent-purple);
+            padding-left: 2rem;
+        }
+
+        .highlight {
+            color: #000;
+            text-decoration: underline;
+            text-decoration-color: var(--accent-cyan);
+            text-decoration-thickness: 4px;
+            text-underline-offset: 4px;
+        }
+
+        .tech-explanation {
+            font-size: 1.3rem;
+            line-height: 1.8;
+            color: #333; /* Dark gray for readability */
+            max-width: 850px;
+            text-align: justify;
+        }
+
+        .tech-highlight {
+            color: #000;
+            font-weight: 700;
+            background-color: #eee;
+            padding: 0 4px;
+        }
+
+        /* Features Grid */
+        .features {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            border-top: 3px solid #000;
+            border-bottom: 3px solid #000;
+            margin-top: auto;
+        }
+
+        .feature-box {
+            padding: 1.5rem;
+            border-right: 3px solid #000;
+            text-align: center;
+        }
+
+        .feature-box:last-child {
+            border-right: none;
+        }
+
+        .feature-title {
+            font-family: 'Space Grotesk', monospace;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            color: #666;
+            margin-bottom: 0.5rem;
+            letter-spacing: 1px;
+        }
+
+        .feature-value {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #000;
+        }
+
+        /* Footer */
+        footer {
+            padding: 2rem 3rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            background: #fff;
+            border-top: 1px solid #000; /* Should align with features bottom border if needed, usually redundant if features is last, but good for safety */
+        }
+
+        .footer-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .footer-tag {
+            font-family: 'Space Grotesk', monospace;
+            font-size: 0.75rem;
+            color: #000;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        .qr-placeholder {
+            width: 105px;
+            height: 105px;
+            background: #fff;
+            content: url('qrcode.svg');
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Hide body margin for pure print if needed */
+        @media print {
+            body { 
+                background: none; 
+                padding: 0; 
+                display: block;
+            }
+            .poster-container {
+                box-shadow: none;
+                width: 100%;
+                height: 100%;
+                border: 3px solid #000; /* Ensure border prints */
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="poster-container">
+        <!-- Film Grain Texture -->
+        <div class="grain"></div>
+
+        <header>
+            <div class="subtitle">PROJECT MNEMOSYNE PRESENTS</div>
+            <h1>ANAMNESE</h1>
+            <div class="subtitle" style="color: #000; opacity: 0.6;">THE PAST, RE-LIVED.</div>
+        </header>
+
+        <!-- Main Visual Hook -->
+        <div class="visual-area">
+            <div class="visual-placeholder"></div>
+            <!-- User Instruction: Replace image here -->
+            <div class="visual-label">
+                <img src="render.png" alt="Anamnese Visual" style="width: 100%; height: 100%; object-fit: contain;">
+            </div>
+        </div>
+
+        <section class="content">
+            <div class="hook-text">
+                "Don't just remember. <span class="highlight">Return.</span>"
+            </div>
+
+            <p class="tech-explanation">
+                Anamnese is not an archive; it is a resurrection engine. By feeding fragmented sensory data into <span class="tech-highlight">4D Gaussian Splatting</span> algorithms, we turn static nostalgia into navigable realities. 
+                <br><br>
+                We offer the ultimate mercy: a 'curated eternity' where the past is not just remembered, but <em>corrected</em> for your comfort.
+            </p>
+        </section>
+
+        <section class="features">
+            <div class="feature-box">
+                <div class="feature-title">Technology</div>
+                <div class="feature-value">Gaussian Fields</div>
+            </div>
+            <div class="feature-box">
+                <div class="feature-title">Method</div>
+                <div class="feature-value">Volumetric Capture</div>
+            </div>
+            <div class="feature-box">
+                <div class="feature-title">Status</div>
+                <div class="feature-value" style="color: var(--accent-cyan)">Prototype V1.0</div>
+            </div>
+        </section>
+
+        <footer>
+            <div class="footer-info">
+                <div class="footer-tag" style="font-weight: 900;">INITIATIVE 2030</div>
+                <div class="footer-tag">COGNITIVE HERITAGE TRUST</div>
+                <div class="footer-tag" style="margin-top: 0.5rem; color: #444;">FINAL PROJECT</div>
+                <!-- anotated from video youtu.be/V9zXxSifK04, anotated Animated Gaussian Splatting – Unreal Engine 5 Integration – Dynamic Lighting -->
+                <div class="footer-tag" style="font-size: 0.6rem; color: #000;">media used: youtu.be/V9zXxSifK04</div>
+            </div>
+            <div class="qr-placeholder"></div>
+        </footer>
+    </div>
+
+</body>
+</html>
