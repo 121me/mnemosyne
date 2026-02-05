@@ -85,7 +85,7 @@ const ethicalQuestions = [
   {
     id: 7,
     title: 'Algorithmic Bias in Nostalgia',
-    question: 'Does the NeRF model default to Western-centric lighting and architectural norms when filling in the "visual gaps" of a memory from a non-Western culture?'
+    question: 'Does the Anamnese reconstruction engine, built on 4D Gaussian Splatting, default to Western-centric lighting and architectural norms when filling in the "visual gaps" of a memory from a non-Western culture?'
   },
   {
     id: 8,
@@ -130,7 +130,7 @@ const personas = [
     education: 'PhD in Oral History & Psychology.',
     pain: '"Empathy Fatigue." Suffers from vicarious trauma. Feels guilty when he approves an AI "hallucination" to calm a patient.',
     gain: 'Believes he is saving human culture from extinction. Sees himself as a curator of the soul.',
-    frustrations: 'Families who demand "happy endings" for traumatic memories. The limits of the NeRF rendering engine.',
+    frustrations: 'Families who demand "happy endings" for traumatic memories. The limits of the Anamnese reconstruction engine (4D Gaussian Splatting).',
     goal: 'To create the perfect "Synthesis"—a memory indistinguishable from reality, yet safe for the user.',
     color: 'cyan',
     avatar: 'J'
@@ -313,9 +313,9 @@ function Content() {
       </section>
 
       {/* PROCESS MODEL */}
-      <section 
-        id="process" 
-        ref={setRef('process')} 
+      <section
+        id="process"
+        ref={setRef('process')}
         className="section process"
         style={{
           opacity: visible['process'] ? 1 : 0,
@@ -329,63 +329,80 @@ function Content() {
             <p>Adapting the "Inside the Box" Methodology</p>
           </div>
 
-          <div className="process-grid">
+          {/* Horizontal grid layout for side-by-side presentation */}
+          <div
+            className="process-row"
+            style={{
+              display: 'flex',
+              flexDirection: 'row',
+              gap: '2rem',
+              justifyContent: 'center',
+              alignItems: 'stretch',
+              marginTop: '2rem'
+            }}
+          >
             {/* Step 1: Extraction */}
-            <div 
+            <div
               className="glass-card process-card"
               style={{
+                flex: 1,
                 opacity: visible['process'] ? 1 : 0,
                 transform: visible['process'] ? 'translateY(0)' : 'translateY(30px)',
-                transition: 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.2s'
+                transition: 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.2s',
+                minWidth: 0
               }}
             >
               <div className="step-number">01</div>
               <span className="role-tag">Role: The Forensic Listener (Human)</span>
               <h3>Extraction</h3>
               <p>
-                Deep-dive interviews with the subject. We don't just scan a brain—we collect 
-                sensory triggers: the <strong>smell of a specific bakery</strong>, 
-                the <strong>texture of a childhood blanket</strong>. 
+                Deep-dive interviews with the subject. We don't just scan a brain—we collect
+                sensory triggers: the <strong>smell of a specific bakery</strong>,
+                the <strong>texture of a childhood blanket</strong>.
                 This requires high Emotional Intelligence.
               </p>
               <span className="intelligence-tag">Intelligence: Emotional & Interpersonal</span>
             </div>
 
             {/* Step 2: Synthesis */}
-            <div 
+            <div
               className="glass-card process-card"
               style={{
+                flex: 1,
                 opacity: visible['process'] ? 1 : 0,
                 transform: visible['process'] ? 'translateY(0)' : 'translateY(30px)',
-                transition: 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.35s'
+                transition: 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.35s',
+                minWidth: 0
               }}
             >
               <div className="step-number">02</div>
               <span className="role-tag">Role: The Neural Architect (AI Agent)</span>
               <h3>Synthesis</h3>
               <p>
-                Procedural generation of 3D environments using <strong>Neural Radiance Fields (NeRFs)</strong> and 
-                <strong> Ray Tracing</strong>. The AI calculates the physics of light 
+                Procedural generation of 3D environments using <strong>4D Gaussian Splatting</strong> and
+                <strong> Ray Tracing</strong>. The Anamnese reconstruction engine calculates the physics of light
                 to recreate the <strong>atmosphere</strong> of the memory, not just the geometry.
               </p>
               <span className="intelligence-tag">Intelligence: Pattern Recognition & Spatial Logic</span>
             </div>
 
             {/* Step 3: Immersion */}
-            <div 
+            <div
               className="glass-card process-card"
               style={{
+                flex: 1,
                 opacity: visible['process'] ? 1 : 0,
                 transform: visible['process'] ? 'translateY(0)' : 'translateY(30px)',
-                transition: 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.5s'
+                transition: 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.5s',
+                minWidth: 0
               }}
             >
               <div className="step-number">03</div>
               <span className="role-tag">Role: The Guide (Human + AI)</span>
               <h3>Immersion</h3>
               <p>
-                The subject enters the simulation via <strong>Haptic VR</strong>. They revisit their 
-                childhood home or a lost moment of joy. This isn't entertainment—it is 
+                The subject enters the simulation via <strong>Haptic VR</strong>. They revisit their
+                childhood home or a lost moment of joy. This isn't entertainment—it is
                 <strong> cognitive therapy</strong> providing closure and comfort.
               </p>
               <span className="intelligence-tag">Intelligence: Kinaesthetic & Intrapersonal</span>

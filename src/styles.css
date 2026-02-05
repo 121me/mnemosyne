@@ -148,6 +148,8 @@ h1, h2, h3, .serif {
   opacity: 0;
   animation: slideUp 1s ease-out 2s forwards;
   max-width: 600px;
+  margin: 0 auto;
+  text-align: center;
 }
 
 .scroll-prompt {
