@@ -4,7 +4,6 @@ import * as THREE from 'three'
 import { motion, useScroll, useTransform } from 'framer-motion'
 import { NeuralNetwork } from './components/NeuralNetwork'
 import { MemorySphere } from './components/MemorySphere'
-import { Effects } from './components/Effects'
 import { PowerInterestMatrix } from './components/PowerInterestMatrix'
 
 // Stakeholder data
@@ -240,9 +239,6 @@ function Scene() {
       
       {/* Central memory sphere */}
       <MemorySphere />
-
-      {/* Post-processing effects */}
-      <Effects />
     </>
   )
 }
@@ -376,25 +372,10 @@ const challengeItem = (i: number) => ({
   }
 })
 
-// ─── Scroll Progress Bar ─────────────────────────────────────────────
-function ScrollProgressBar() {
-  const { scrollYProgress } = useScroll()
-  const scaleX = useTransform(scrollYProgress, [0, 1], [0, 1])
-  return (
-    <motion.div
-      className="scroll-progress-bar"
-      style={{ scaleX, transformOrigin: '0%' }}
-    />
-  )
-}
-
 // HTML Content Overlay
 function Content() {
   return (
     <div className="content-layer">
-      {/* Scroll progress indicator */}
-      <ScrollProgressBar />
-
       {/* HERO */}
       <motion.section
         id="hero"

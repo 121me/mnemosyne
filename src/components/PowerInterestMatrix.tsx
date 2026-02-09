@@ -192,8 +192,24 @@ export function PowerInterestMatrix() {
       >
         {/* ── Defs ── */}
         <defs>
+          {/* Flow animation keyframes */}
+          <style>{`
+            @keyframes pim-flow {
+              to { stroke-dashoffset: -40; }
+            }
+            @keyframes pim-flow-danger {
+              to { stroke-dashoffset: -32; }
+            }
+          `}</style>
           <filter id="pim-glow" x="-50%" y="-50%" width="200%" height="200%">
             <feGaussianBlur in="SourceGraphic" stdDeviation="4" />
+            <feMerge>
+              <feMergeNode />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+          <filter id="pim-line-glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" />
             <feMerge>
               <feMergeNode />
               <feMergeNode in="SourceGraphic" />
@@ -213,6 +229,22 @@ export function PowerInterestMatrix() {
           >
             <circle cx="11" cy="11" r="0.6" fill="#c5c0b8" opacity="0.35" />
           </pattern>
+          {/* Gradients for each link */}
+          {LINKS.map((l) => {
+            const a = byId(l.from), b = byId(l.to)
+            return (
+              <linearGradient
+                key={`grad-${l.from}-${l.to}`}
+                id={`pim-grad-${l.from}-${l.to}`}
+                x1={toX(a.interest)} y1={toY(a.power)}
+                x2={toX(b.interest)} y2={toY(b.power)}
+                gradientUnits="userSpaceOnUse"
+              >
+                <stop offset="0%" stopColor={l.danger ? '#ff2222' : a.color} />
+                <stop offset="100%" stopColor={l.danger ? '#ff6b00' : b.color} />
+              </linearGradient>
+            )
+          })}
         </defs>
 
         {/* ── Plot background ── */}
@@ -244,7 +276,7 @@ export function PowerInterestMatrix() {
             y={M.top}
             width={PW / 2}
             height={PH / 2}
-            fill="rgba(239,68,68,0.018)"
+            fill="rgba(239,68,68,0.06)"
             variants={fade(0.08)}
           />
           <motion.rect
@@ -252,7 +284,7 @@ export function PowerInterestMatrix() {
             y={M.top}
             width={PW / 2}
             height={PH / 2}
-            fill="rgba(0,119,204,0.028)"
+            fill="rgba(0,119,204,0.07)"
             variants={fade(0.12)}
           />
           <motion.rect
@@ -260,7 +292,7 @@ export function PowerInterestMatrix() {
             y={CY}
             width={PW / 2}
             height={PH / 2}
-            fill="rgba(0,0,0,0.008)"
+            fill="rgba(100,100,100,0.04)"
             variants={fade(0.08)}
           />
           <motion.rect
@@ -268,7 +300,7 @@ export function PowerInterestMatrix() {
             y={CY}
             width={PW / 2}
             height={PH / 2}
-            fill="rgba(139,92,246,0.022)"
+            fill="rgba(139,92,246,0.06)"
             variants={fade(0.12)}
           />
         </g>
@@ -303,9 +335,9 @@ export function PowerInterestMatrix() {
             y={q.y}
             textAnchor="middle"
             dominantBaseline="middle"
-            fill="#cac5bc"
+            fill="#9a9590"
             fontSize={10}
-            fontWeight={600}
+            fontWeight={700}
             fontFamily="'Instrument Sans', sans-serif"
             letterSpacing="0.1em"
             variants={fade(0.25 + i * 0.04)}
@@ -314,20 +346,48 @@ export function PowerInterestMatrix() {
           </motion.text>
         ))}
 
-        {/* ── Connections ── */}
-        {LINKS.map((l, i) => (
-          <motion.path
-            key={`${l.from}-${l.to}`}
-            d={curvePath(byId(l.from), byId(l.to))}
-            fill="none"
-            stroke={l.danger ? '#ef4444' : '#ccc7be'}
-            strokeWidth={l.danger ? 1.4 : 0.9}
-            strokeDasharray={l.danger ? '7 4' : '4 3'}
-            strokeLinecap="round"
-            variants={fade(0.4 + i * 0.06)}
-            style={{ opacity: l.danger ? 0.45 : 0.35 }}
-          />
-        ))}
+        {/* ── Connections (animated flow) ── */}
+        {LINKS.map((l, i) => {
+          const pathD = curvePath(byId(l.from), byId(l.to))
+          return (
+            <motion.g key={`${l.from}-${l.to}`} variants={fade(0.4 + i * 0.06)}>
+              {/* Glow layer */}
+              <path
+                d={pathD}
+                fill="none"
+                stroke={`url(#pim-grad-${l.from}-${l.to})`}
+                strokeWidth={l.danger ? 6 : 5}
+                strokeLinecap="round"
+                filter="url(#pim-line-glow)"
+                opacity={l.danger ? 0.25 : 0.18}
+              />
+              {/* Main bold line */}
+              <path
+                d={pathD}
+                fill="none"
+                stroke={`url(#pim-grad-${l.from}-${l.to})`}
+                strokeWidth={l.danger ? 2.8 : 2.2}
+                strokeLinecap="round"
+                opacity={l.danger ? 0.85 : 0.7}
+              />
+              {/* Animated dash overlay (flow effect) */}
+              <path
+                d={pathD}
+                fill="none"
+                stroke="white"
+                strokeWidth={l.danger ? 2 : 1.6}
+                strokeDasharray={l.danger ? '8 24' : '6 34'}
+                strokeLinecap="round"
+                opacity={l.danger ? 0.55 : 0.45}
+                style={{
+                  animation: l.danger
+                    ? 'pim-flow-danger 1.2s linear infinite'
+                    : 'pim-flow 2s linear infinite',
+                }}
+              />
+            </motion.g>
+          )
+        })}
 
         {/* ── Nodes ── */}
         {NODES.map((n, i) => {
