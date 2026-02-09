@@ -1,10 +1,11 @@
-import { Suspense, useRef, useEffect, useState } from 'react'
+import { Suspense, useRef, useEffect } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
+import { motion, useScroll, useTransform } from 'framer-motion'
 import { NeuralNetwork } from './components/NeuralNetwork'
 import { MemorySphere } from './components/MemorySphere'
 import { Effects } from './components/Effects'
-// StakeholderMap 3D component available but using CSS grid visualization instead
+import { PowerInterestMatrix } from './components/PowerInterestMatrix'
 
 // Stakeholder data
 const stakeholderGroups = [
@@ -47,6 +48,16 @@ const stakeholderGroups = [
     status: 'Informed / Customers',
     context: 'They often pay for the "Synthesis" sessions. They have a conflict of interest: they want their loved ones to be happy (Comfort), but often demand historical accuracy for family records (Truth).',
     color: 'gold'
+  },
+  {
+    id: 'infrastructure',
+    name: 'The Infrastructure Sovereigns',
+    subtitle: 'AI & Cloud Providers',
+    profile: 'The owners of the compute power required for 4D Gaussian Splatting, ray tracing, and worldmaking.',
+    attributes: { interest: 'Low', power: 'Absolute' },
+    status: 'Invisible / Dominant',
+    context: 'They do not care about the memory itself, only the compute cycles. They challenge the open data philosophy by being the only ones capable of monetizing the "Heritage Trust." As AI challenges established practices of open data sharing, these actors effectively undermine the original public value orientation.',
+    color: 'red'
   }
 ]
 
@@ -236,121 +247,324 @@ function Scene() {
   )
 }
 
+// ─── Framer-motion animation variants ────────────────────────────────
+const EASE_SMOOTH: [number, number, number, number] = [0.4, 0, 0.2, 1]
+
+const sectionVariants = {
+  hidden: { opacity: 0, y: 60 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.8, ease: EASE_SMOOTH }
+  }
+}
+
+const staggerContainer = (stagger = 0.1) => ({
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: stagger,
+      delayChildren: 0.15,
+    }
+  }
+})
+
+const fadeUpItem = {
+  hidden: { opacity: 0, y: 35 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.6, ease: EASE_SMOOTH }
+  }
+}
+
+const scaleUpItem = {
+  hidden: { opacity: 0, scale: 0.92, y: 30 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    y: 0,
+    transition: { type: 'spring' as const, stiffness: 150, damping: 20 }
+  }
+}
+
+const heroTitle = {
+  hidden: { opacity: 0, y: 30, scale: 0.95, filter: 'blur(10px)' },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    filter: 'blur(0px)',
+    transition: { duration: 2, ease: EASE_SMOOTH }
+  }
+}
+
+const heroSubtitle = {
+  hidden: { opacity: 0, y: 25 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.8, ease: 'easeOut' as const, delay: 1.2 }
+  }
+}
+
+const heroTagline = {
+  hidden: { opacity: 0, y: 25 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.8, ease: 'easeOut' as const, delay: 1.7 }
+  }
+}
+
+const scrollPromptVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { duration: 0.8, delay: 2.5 }
+  }
+}
+
+const cardHover = {
+  y: -6,
+  transition: { type: 'spring' as const, stiffness: 300, damping: 20 }
+}
+
+const tensionSlideLeft = {
+  hidden: { opacity: 0, x: -40 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.7, ease: EASE_SMOOTH, delay: 0.2 }
+  }
+}
+
+const tensionSlideRight = {
+  hidden: { opacity: 0, x: 40 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.7, ease: EASE_SMOOTH, delay: 0.35 }
+  }
+}
+
+const tensionDividerPop = {
+  hidden: { opacity: 0, scale: 0 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    transition: { type: 'spring' as const, stiffness: 200, damping: 15, delay: 0.5 }
+  }
+}
+
+const sectionHeaderVariants = {
+  hidden: { opacity: 0, y: 30 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.7, ease: EASE_SMOOTH }
+  }
+}
+
+const challengeItem = (i: number) => ({
+  hidden: { opacity: 0, x: -30 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.6, ease: EASE_SMOOTH, delay: 0.3 + i * 0.15 }
+  }
+})
+
+// ─── Scroll Progress Bar ─────────────────────────────────────────────
+function ScrollProgressBar() {
+  const { scrollYProgress } = useScroll()
+  const scaleX = useTransform(scrollYProgress, [0, 1], [0, 1])
+  return (
+    <motion.div
+      className="scroll-progress-bar"
+      style={{ scaleX, transformOrigin: '0%' }}
+    />
+  )
+}
+
 // HTML Content Overlay
 function Content() {
-  const [visible, setVisible] = useState<Record<string, boolean>>({})
-  const sectionRefs = useRef<Record<string, HTMLElement | null>>({})
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.target.id) {
-            setVisible((prev) => ({
-              ...prev,
-              [entry.target.id]: entry.isIntersecting
-            }))
-          }
-        })
-      },
-      { threshold: 0.15 }
-    )
-
-    Object.values(sectionRefs.current).forEach((el) => {
-      if (el) observer.observe(el)
-    })
-
-    return () => observer.disconnect()
-  }, [])
-
-  const setRef = (id: string) => (el: HTMLElement | null) => {
-    sectionRefs.current[id] = el
-  }
-
   return (
     <div className="content-layer">
+      {/* Scroll progress indicator */}
+      <ScrollProgressBar />
+
       {/* HERO */}
-      <section 
-        id="hero" 
-        ref={setRef('hero')} 
+      <motion.section
+        id="hero"
         className="section hero"
+        initial="hidden"
+        animate="visible"
       >
         <div className="hero-content">
-          <h1>MNEMOSYNE</h1>
-          <p className="hero-subtitle">The Cognitive Heritage Trust // Est. 2030</p>
-          <p className="hero-tagline">"Your past, preserved. Not just recorded, but re-lived."</p>
+          <motion.h1 variants={heroTitle}>MNEMOSYNE</motion.h1>
+          <motion.p className="hero-subtitle" variants={heroSubtitle}>
+            The Cognitive Heritage Trust // Est. 2030
+          </motion.p>
+          <motion.p className="hero-tagline" variants={heroTagline}>
+            "Your past, preserved. Not just recorded, but re-lived."
+          </motion.p>
         </div>
-        <div className="scroll-prompt">Scroll to Enter</div>
-      </section>
+        <motion.div
+          className="scroll-prompt"
+          variants={scrollPromptVariants}
+          animate={{ y: [0, -8, 0] }}
+          transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut', delay: 3 }}
+        >
+          Scroll to Enter
+        </motion.div>
+      </motion.section>
 
       {/* MANIFESTO / THE HOOK */}
-      <section 
-        id="manifesto" 
-        ref={setRef('manifesto')} 
+      <motion.section
+        id="manifesto"
         className="section manifesto"
-        style={{
-          opacity: visible['manifesto'] ? 1 : 0,
-          transform: visible['manifesto'] ? 'translateY(0)' : 'translateY(50px)',
-          transition: 'all 1s cubic-bezier(0.4, 0, 0.2, 1)'
-        }}
+        variants={sectionVariants}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.2 }}
       >
         <div className="container">
-          <div className="glass-card manifesto-card">
-            <span className="year-badge">Scenario: January 7, 2030</span>
+          <motion.div
+            className="glass-card manifesto-card"
+            whileHover={cardHover}
+          >
+            <motion.span
+              className="year-badge"
+              initial={{ opacity: 0, scale: 0.8 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ type: 'spring' as const, stiffness: 200, damping: 15, delay: 0.3 }}
+            >
+              Scenario: January 7, 2030
+            </motion.span>
             <h2>The Archive of Feeling</h2>
             <p>
-              For years, we've been archiving <strong>petabytes of human data</strong> every day. 
-              Photos, videos, documents—but we realized something terrifying: 
+              For years, we've been archiving <strong>petabytes of human data</strong> every day.
+              Photos, videos, documents—but we realized something terrifying:
               we were saving the <strong>data</strong>, but losing the <strong>feeling</strong>.
             </p>
             <p style={{ marginTop: '1.5rem' }}>
-              In 2026, the concept of a "Memory Market" emerged—a crude idea of trading experiences. 
-              But memories shouldn't be a <strong>commodity to be sold</strong>. 
+              In 2026, the concept of a "Memory Market" emerged—a crude idea of trading experiences.
+              But memories shouldn't be a <strong>commodity to be sold</strong>.
               They are a <strong>heritage to be saved</strong>.
             </p>
-          </div>
+          </motion.div>
         </div>
-      </section>
+      </motion.section>
 
-      {/* PROCESS MODEL */}
-      <section
-        id="process"
-        ref={setRef('process')}
-        className="section process"
-        style={{
-          opacity: visible['process'] ? 1 : 0,
-          transform: visible['process'] ? 'translateY(0)' : 'translateY(50px)',
-          transition: 'all 1s cubic-bezier(0.4, 0, 0.2, 1) 0.1s'
-        }}
+      {/* THE BLACK BOX OF IMMERSION */}
+      <motion.section
+        id="blackbox"
+        className="section blackbox"
+        variants={sectionVariants}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.15 }}
       >
         <div className="container">
-          <div className="section-header">
+          <motion.div
+            className="glass-card blackbox-card"
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.2 }}
+            whileHover={cardHover}
+          >
+            <motion.div
+              className="blackbox-badge"
+              initial={{ opacity: 0, scale: 0.8 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ type: 'spring' as const, stiffness: 200, damping: 15, delay: 0.2 }}
+            >
+              Think Inside the Box
+            </motion.div>
+            <h2>The Black Box of Immersion</h2>
+            <p>
+              We do not just preserve memories; we curate the <strong>parameters of reality</strong>.
+              In an era where AI generates professional-grade seamless tiles and worldmaking is automated,
+              the "Box" is no longer a constraint—it is a <strong>sanctuary</strong>.
+            </p>
+            <p style={{ marginTop: '1.5rem' }}>
+              It is the only place where the rules of physics (and ethics) are guaranteed.
+              As open source software facilitates analysis of textures for physically-based rendering,
+              and image generators create what was once reserved for studios—the question becomes:
+              <strong> who frames the box, and who is allowed inside?</strong>
+            </p>
+            <motion.div
+              className="blackbox-tensions"
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.3 }}
+            >
+              <motion.div className="tension-item" variants={tensionSlideLeft}>
+                <div className="tension-icon">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9" />
+                  </svg>
+                </div>
+                <div>
+                  <h4>Public Heritage Layer</h4>
+                  <p>Open-source assets, community archives, lower fidelity—but accessible to all. The "glitch" is the cost of openness.</p>
+                </div>
+              </motion.div>
+              <motion.div className="tension-divider" variants={tensionDividerPop}>vs.</motion.div>
+              <motion.div className="tension-item" variants={tensionSlideRight}>
+                <div className="tension-icon tension-icon-premium">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                </div>
+                <div>
+                  <h4>Private Premium Layer</h4>
+                  <p>Hyper-realistic, ray-traced "Director's Cut"—monetized memory, available only to those who can pay for compute.</p>
+                </div>
+              </motion.div>
+            </motion.div>
+          </motion.div>
+        </div>
+      </motion.section>
+
+      {/* PROCESS MODEL */}
+      <motion.section
+        id="process"
+        className="section process"
+        variants={sectionVariants}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.1 }}
+      >
+        <div className="container">
+          <motion.div className="section-header" variants={sectionHeaderVariants}>
             <h2>The Process Model</h2>
             <p>Adapting the "Inside the Box" Methodology</p>
-          </div>
+          </motion.div>
 
-          {/* Horizontal grid layout for side-by-side presentation */}
-          <div
-            className="process-row"
+          {/* 2x2 grid layout for process steps */}
+          <motion.div
+            className="process-grid-2x2"
+            variants={staggerContainer(0.12)}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.15 }}
             style={{
-              display: 'flex',
-              flexDirection: 'row',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(2, 1fr)',
               gap: '2rem',
-              justifyContent: 'center',
-              alignItems: 'stretch',
               marginTop: '2rem'
             }}
           >
             {/* Step 1: Extraction */}
-            <div
+            <motion.div
               className="glass-card process-card"
-              style={{
-                flex: 1,
-                opacity: visible['process'] ? 1 : 0,
-                transform: visible['process'] ? 'translateY(0)' : 'translateY(30px)',
-                transition: 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.2s',
-                minWidth: 0
-              }}
+              variants={scaleUpItem}
+              whileHover={cardHover}
             >
               <div className="step-number">01</div>
               <span className="role-tag">Role: The Forensic Listener (Human)</span>
@@ -362,18 +576,13 @@ function Content() {
                 This requires high Emotional Intelligence.
               </p>
               <span className="intelligence-tag">Intelligence: Emotional & Interpersonal</span>
-            </div>
+            </motion.div>
 
             {/* Step 2: Synthesis */}
-            <div
+            <motion.div
               className="glass-card process-card"
-              style={{
-                flex: 1,
-                opacity: visible['process'] ? 1 : 0,
-                transform: visible['process'] ? 'translateY(0)' : 'translateY(30px)',
-                transition: 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.35s',
-                minWidth: 0
-              }}
+              variants={scaleUpItem}
+              whileHover={cardHover}
             >
               <div className="step-number">02</div>
               <span className="role-tag">Role: The Neural Architect (AI Agent)</span>
@@ -384,20 +593,33 @@ function Content() {
                 to recreate the <strong>atmosphere</strong> of the memory, not just the geometry.
               </p>
               <span className="intelligence-tag">Intelligence: Pattern Recognition & Spatial Logic</span>
-            </div>
+            </motion.div>
 
-            {/* Step 3: Immersion */}
-            <div
+            {/* Step 3: Calibration */}
+            <motion.div
               className="glass-card process-card"
-              style={{
-                flex: 1,
-                opacity: visible['process'] ? 1 : 0,
-                transform: visible['process'] ? 'translateY(0)' : 'translateY(30px)',
-                transition: 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.5s',
-                minWidth: 0
-              }}
+              variants={scaleUpItem}
+              whileHover={cardHover}
             >
               <div className="step-number">03</div>
+              <span className="role-tag">Role: The XR Technician (Human + Machine)</span>
+              <h3>Calibration</h3>
+              <p>
+                Aligning the subject's physical limitations with the virtual
+                <strong> "Worldmaking" parameters</strong>. Ensuring the "seamless tiles" of
+                the generated world do not induce cognitive rejection. This is where
+                the <strong>Motion Hub</strong> maps body to memory.
+              </p>
+              <span className="intelligence-tag">Intelligence: Spatial & Technical Proficiency</span>
+            </motion.div>
+
+            {/* Step 4: Immersion */}
+            <motion.div
+              className="glass-card process-card"
+              variants={scaleUpItem}
+              whileHover={cardHover}
+            >
+              <div className="step-number">04</div>
               <span className="role-tag">Role: The Guide (Human + AI)</span>
               <h3>Immersion</h3>
               <p>
@@ -406,100 +628,42 @@ function Content() {
                 <strong> cognitive therapy</strong> providing closure and comfort.
               </p>
               <span className="intelligence-tag">Intelligence: Kinaesthetic & Intrapersonal</span>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </div>
-      </section>
+      </motion.section>
 
       {/* STAKEHOLDER GROUPS */}
-      <section 
-        id="stakeholders" 
-        ref={setRef('stakeholders')} 
+      <motion.section
+        id="stakeholders"
         className="section stakeholders"
-        style={{
-          opacity: visible['stakeholders'] ? 1 : 0,
-          transform: visible['stakeholders'] ? 'translateY(0)' : 'translateY(50px)',
-          transition: 'all 1s cubic-bezier(0.4, 0, 0.2, 1)'
-        }}
+        variants={sectionVariants}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.1 }}
       >
         <div className="container">
-          <div className="section-header">
+          <motion.div className="section-header" variants={sectionHeaderVariants}>
             <h2>Stakeholder Ecosystem</h2>
             <p>The Power-Interest Landscape</p>
-          </div>
+          </motion.div>
 
-          {/* Power-Interest Matrix Visualization */}
-          <div 
-            className="power-interest-matrix"
-            style={{
-              opacity: visible['stakeholders'] ? 1 : 0,
-              transform: visible['stakeholders'] ? 'scale(1)' : 'scale(0.95)',
-              transition: 'all 1s cubic-bezier(0.4, 0, 0.2, 1) 0.2s'
-            }}
+          {/* Power-Interest Matrix — SVG visualization with framer-motion */}
+          <PowerInterestMatrix />
+
+          <motion.div
+            className="stakeholder-grid"
+            variants={staggerContainer(0.1)}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.1 }}
           >
-            <div className="matrix-grid">
-              {/* Axis labels */}
-              <div className="axis-label axis-y">
-                <span>POWER / INFLUENCE</span>
-                <span className="axis-arrow">↑</span>
-              </div>
-              <div className="axis-label axis-x">
-                <span>INTEREST / STAKE</span>
-                <span className="axis-arrow">→</span>
-              </div>
-              
-              {/* Quadrants */}
-              <div className="quadrant quadrant-tl">
-                <span className="quadrant-label">Monitor</span>
-              </div>
-              <div className="quadrant quadrant-tr">
-                <span className="quadrant-label">Manage Closely</span>
-              </div>
-              <div className="quadrant quadrant-bl">
-                <span className="quadrant-label">Minimal Effort</span>
-              </div>
-              <div className="quadrant quadrant-br">
-                <span className="quadrant-label">Keep Informed</span>
-              </div>
-              
-              {/* Stakeholder nodes positioned on grid */}
-              <div className="matrix-node node-subjects" title="The Subjects">
-                <div className="node-dot dot-purple" />
-                <span className="node-label">Subjects</span>
-              </div>
-              <div className="matrix-node node-preservationists" title="Preservationists">
-                <div className="node-dot dot-cyan" />
-                <span className="node-label">Staff</span>
-              </div>
-              <div className="matrix-node node-ethics" title="Ethics Board">
-                <div className="node-dot dot-green" />
-                <span className="node-label">Ethics Board</span>
-              </div>
-              <div className="matrix-node node-families" title="Families">
-                <div className="node-dot dot-gold" />
-                <span className="node-label">Families</span>
-              </div>
-
-              {/* Connection lines (SVG) */}
-              <svg className="matrix-connections" viewBox="0 0 100 100" preserveAspectRatio="none">
-                <line x1="75" y1="75" x2="75" y2="25" className="connection-line line-purple" />
-                <line x1="75" y1="75" x2="60" y2="50" className="connection-line line-gold" />
-                <line x1="75" y1="25" x2="40" y2="25" className="connection-line line-cyan" />
-                <line x1="60" y1="50" x2="75" y2="25" className="connection-line line-gold" />
-              </svg>
-            </div>
-          </div>
-
-          <div className="stakeholder-grid">
-            {stakeholderGroups.map((group, index) => (
-              <div 
+            {stakeholderGroups.map((group) => (
+              <motion.div
                 key={group.id}
                 className={`glass-card stakeholder-card stakeholder-${group.color}`}
-                style={{
-                  opacity: visible['stakeholders'] ? 1 : 0,
-                  transform: visible['stakeholders'] ? 'translateY(0)' : 'translateY(30px)',
-                  transition: `all 0.8s cubic-bezier(0.4, 0, 0.2, 1) ${0.3 + index * 0.1}s`
-                }}
+                variants={fadeUpItem}
+                whileHover={cardHover}
               >
                 <div className={`stakeholder-indicator indicator-${group.color}`} />
                 <div className="stakeholder-header">
@@ -525,81 +689,89 @@ function Content() {
                   {group.status}
                 </div>
                 <p className="stakeholder-context">{group.context}</p>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
-      </section>
+      </motion.section>
 
       {/* ETHICAL QUESTIONS - THE HARD 9 */}
-      <section 
-        id="hard-nine" 
-        ref={setRef('hard-nine')} 
+      <motion.section
+        id="hard-nine"
         className="section hard-nine"
-        style={{
-          opacity: visible['hard-nine'] ? 1 : 0,
-          transform: visible['hard-nine'] ? 'translateY(0)' : 'translateY(50px)',
-          transition: 'all 1s cubic-bezier(0.4, 0, 0.2, 1)'
-        }}
+        variants={sectionVariants}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.1 }}
       >
         <div className="container">
-          <div className="section-header">
+          <motion.div className="section-header" variants={sectionHeaderVariants}>
             <h2>The "Hard 9"</h2>
             <p>Ethical Questions We Must Answer</p>
-          </div>
+          </motion.div>
 
-          <div className="questions-grid">
-            {ethicalQuestions.map((q, index) => (
-              <div 
+          <motion.div
+            className="questions-grid"
+            variants={staggerContainer(0.06)}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.1 }}
+          >
+            {ethicalQuestions.map((q) => (
+              <motion.div
                 key={q.id}
                 className="glass-card question-card"
-                style={{
-                  opacity: visible['hard-nine'] ? 1 : 0,
-                  transform: visible['hard-nine'] ? 'translateY(0)' : 'translateY(30px)',
-                  transition: `all 0.8s cubic-bezier(0.4, 0, 0.2, 1) ${0.05 + index * 0.05}s`
-                }}
+                variants={scaleUpItem}
+                whileHover={{ y: -8, scale: 1.02, transition: { type: 'spring' as const, stiffness: 300, damping: 20 } }}
               >
                 <div className="question-number">{String(q.id).padStart(2, '0')}</div>
                 <h4 className="question-title">{q.title}</h4>
                 <p className="question-text">{q.question}</p>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
-      </section>
+      </motion.section>
 
       {/* PERSONAS */}
-      <section 
-        id="personas" 
-        ref={setRef('personas')} 
+      <motion.section
+        id="personas"
         className="section personas"
-        style={{
-          opacity: visible['personas'] ? 1 : 0,
-          transform: visible['personas'] ? 'translateY(0)' : 'translateY(50px)',
-          transition: 'all 1s cubic-bezier(0.4, 0, 0.2, 1)'
-        }}
+        variants={sectionVariants}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.1 }}
       >
         <div className="container">
-          <div className="section-header">
+          <motion.div className="section-header" variants={sectionHeaderVariants}>
             <h2>The Personas</h2>
             <p>Human Stories Behind the System</p>
-          </div>
+          </motion.div>
 
-          <div className="personas-grid">
-            {personas.map((persona, index) => (
-              <div 
+          <motion.div
+            className="personas-grid"
+            variants={staggerContainer(0.15)}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.1 }}
+          >
+            {personas.map((persona) => (
+              <motion.div
                 key={persona.id}
                 className={`glass-card persona-card persona-${persona.color}`}
-                style={{
-                  opacity: visible['personas'] ? 1 : 0,
-                  transform: visible['personas'] ? 'translateY(0)' : 'translateY(30px)',
-                  transition: `all 0.8s cubic-bezier(0.4, 0, 0.2, 1) ${0.1 + index * 0.1}s`
-                }}
+                variants={fadeUpItem}
+                whileHover={cardHover}
               >
                 <div className="persona-header">
-                  <div className={`persona-avatar avatar-${persona.color}`}>
+                  <motion.div
+                    className={`persona-avatar avatar-${persona.color}`}
+                    initial={{ scale: 0, rotate: -180 }}
+                    whileInView={{ scale: 1, rotate: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ type: 'spring' as const, stiffness: 200, damping: 15, delay: 0.3 }}
+                  >
                     {persona.avatar}
-                  </div>
+                  </motion.div>
                   <div className="persona-identity">
                     <h3>{persona.name} <span className="persona-age">({persona.age})</span></h3>
                     <span className="persona-role">{persona.role}</span>
@@ -611,14 +783,26 @@ function Content() {
                   <div className="stat">
                     <span className="stat-label">Power</span>
                     <div className={`stat-bar bar-${persona.power.toLowerCase()}`}>
-                      <div className="stat-fill" />
+                      <motion.div
+                        className="stat-fill"
+                        initial={{ width: 0 }}
+                        whileInView={{ width: persona.power === 'High' ? '90%' : persona.power === 'Medium' ? '60%' : '30%' }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 1, ease: EASE_SMOOTH, delay: 0.5 }}
+                      />
                     </div>
                     <span className="stat-value">{persona.power}</span>
                   </div>
                   <div className="stat">
                     <span className="stat-label">Interest</span>
                     <div className={`stat-bar bar-${persona.interest.toLowerCase()}`}>
-                      <div className="stat-fill" />
+                      <motion.div
+                        className="stat-fill"
+                        initial={{ width: 0 }}
+                        whileInView={{ width: persona.interest === 'High' ? '90%' : persona.interest === 'Medium' ? '60%' : '30%' }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 1, ease: EASE_SMOOTH, delay: 0.65 }}
+                      />
                     </div>
                     <span className="stat-value">{persona.interest}</span>
                   </div>
@@ -660,101 +844,159 @@ function Content() {
                   <span className="goal-label">Goal</span>
                   <p>{persona.goal}</p>
                 </div>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
-      </section>
+      </motion.section>
 
       {/* ETHICS & IMPACT */}
-      <section 
-        id="ethics" 
-        ref={setRef('ethics')} 
+      <motion.section
+        id="ethics"
         className="section ethics"
-        style={{
-          opacity: visible['ethics'] ? 1 : 0,
-          transform: visible['ethics'] ? 'translateY(0)' : 'translateY(50px)',
-          transition: 'all 1s cubic-bezier(0.4, 0, 0.2, 1)'
-        }}
+        variants={sectionVariants}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.15 }}
       >
         <div className="container">
-          <div className="glass-card ethics-card">
+          <motion.div
+            className="glass-card ethics-card"
+            whileHover={cardHover}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.2 }}
+          >
             <div className="ethics-layout">
-              <div className="ethics-text">
+              <motion.div className="ethics-text" variants={sectionHeaderVariants}>
                 <h2>Ethics & Impact</h2>
                 <p>
-                  As we bridge the gap between <strong>Care Work</strong> and <strong>Creative Tech</strong>, 
+                  As we bridge the gap between <strong>Care Work</strong> and <strong>Creative Tech</strong>,
                   we face serious ethical challenges. As designers in 2030, we must ask difficult questions.
                 </p>
-              </div>
-              
+              </motion.div>
+
               <div>
-                <div className="challenge-item">
+                <motion.div className="challenge-item" variants={challengeItem(0)}>
                   <h4>Truth vs. Comfort</h4>
                   <p>
-                    If the AI "hallucinates" a detail—making the weather sunny in a memory that was actually rainy—is that a lie? 
+                    If the AI "hallucinates" a detail—making the weather sunny in a memory that was actually rainy—is that a lie?
                     Or is it <strong>therapeutic mercy</strong>? We must decide: are we documentarians or therapists?
                   </p>
-                </div>
-                
-                <div className="challenge-item">
+                </motion.div>
+
+                <motion.div className="challenge-item" variants={challengeItem(1)}>
                   <h4>Inequality & Access</h4>
                   <p>
-                    We cannot allow high-fidelity memory preservation to become a luxury for the rich. 
-                    We operate on a <strong>"Public Stack"</strong> model—open-source archives for educational use 
+                    We cannot allow high-fidelity memory preservation to become a luxury for the rich.
+                    We operate on a <strong>"Public Stack"</strong> model—open-source archives for educational use
                     subsidize private therapy sessions.
                   </p>
-                </div>
+                </motion.div>
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
-      </section>
+      </motion.section>
 
       {/* CONCLUSION */}
-      <section 
-        id="conclusion" 
-        ref={setRef('conclusion')} 
+      <motion.section
+        id="conclusion"
         className="section conclusion"
-        style={{
-          opacity: visible['conclusion'] ? 1 : 0,
-          transform: visible['conclusion'] ? 'translateY(0)' : 'translateY(50px)',
-          transition: 'all 1s cubic-bezier(0.4, 0, 0.2, 1)'
-        }}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.2 }}
       >
         <div className="container">
-          <div className="glass-card conclusion-card">
+          <motion.div
+            className="glass-card conclusion-card"
+            variants={{
+              hidden: { opacity: 0, y: 40, scale: 0.96 },
+              visible: {
+                opacity: 1,
+                y: 0,
+                scale: 1,
+                transition: { duration: 1, ease: EASE_SMOOTH }
+              }
+            }}
+            whileHover={cardHover}
+          >
             <h2>The Future of Memory</h2>
             <p>
-              The transformation of labor in the 2030s isn't just about robots taking jobs. 
-              It's about humans moving into roles that require <strong>deep empathy</strong>, 
+              The transformation of labor in the 2030s isn't just about robots taking jobs.
+              It's about humans moving into roles that require <strong>deep empathy</strong>,
               supported by AI that handles the heavy computational lifting.
             </p>
             <p>
-              Mnemosyne is a proposal for that future. A future where we use our 
-              <strong> most advanced technology</strong> to protect our <strong>most fragile possession</strong>: 
+              Mnemosyne is a proposal for that future. A future where we use our
+              <strong> most advanced technology</strong> to protect our <strong>most fragile possession</strong>:
               <em> our past</em>.
             </p>
-          </div>
+          </motion.div>
         </div>
-      </section>
+      </motion.section>
 
       {/* FOOTER */}
-      <footer 
+      <motion.footer
         id="footer"
-        ref={setRef('footer')} 
         className="section footer"
-        style={{
-          opacity: visible['footer'] ? 1 : 0,
-          transition: 'all 1s cubic-bezier(0.4, 0, 0.2, 1)'
-        }}
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true, amount: 0.3 }}
+        transition={{ duration: 1, ease: 'easeOut' }}
       >
         <div className="container">
-          <h3 className="serif">MNEMOSYNE</h3>
-          <p className="footer-locations">Saarbrücken • Tokyo • The Cloud</p>
-          <p className="footer-meta">GenAILab 2030 Submission • Jan 21 Checkpoint</p>
+          <motion.h3
+            className="serif"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.7, delay: 0.1 }}
+          >
+            MNEMOSYNE
+          </motion.h3>
+          <motion.p
+            className="footer-locations"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.7, delay: 0.25 }}
+          >
+            Saarbrücken • Tokyo • The Cloud
+          </motion.p>
+          <motion.div
+            className="footer-techstack"
+            initial={{ opacity: 0, y: 15 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.7, delay: 0.4 }}
+          >
+            <span className="techstack-label">Built on Open Source</span>
+            <p className="techstack-list">
+              Three.js • React-Three-Fiber • React-Three-Drei • React-Three-Postprocessing • Vite
+            </p>
+          </motion.div>
+          <motion.p
+            className="footer-meta"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.7, delay: 0.55 }}
+          >
+            HAMLET × IMPULSE × CYANOTYPES — "Think Inside the Box" Hackathon, Saarbrücken Feb 10–12 2026
+          </motion.p>
+          <motion.p
+            className="footer-meta"
+            style={{ marginTop: '0.25rem' }}
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.7, delay: 0.65 }}
+          >
+            GenAI Lab, HBKsaar — Generative Arts and Design Lab
+          </motion.p>
         </div>
-      </footer>
+      </motion.footer>
     </div>
   )
 }
@@ -770,10 +1012,12 @@ export default function App() {
             antialias: true,
             alpha: false,
             powerPreference: 'high-performance',
-            preserveDrawingBuffer: true
           }}
           dpr={[1, 1.5]}
           frameloop="always"
+          onCreated={({ gl }) => {
+            gl.setClearColor('#faf8f5', 1)
+          }}
         >
           <Suspense fallback={null}>
             <Scene />

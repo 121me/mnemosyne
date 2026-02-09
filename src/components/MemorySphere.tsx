@@ -1,6 +1,6 @@
-import { useRef, useMemo, useState } from 'react'
+import { useRef, useMemo, useCallback } from 'react'
 import { useFrame } from '@react-three/fiber'
-import { Float, Sparkles, MeshDistortMaterial, Line } from '@react-three/drei'
+import { Float, Sparkles, MeshDistortMaterial, Edges } from '@react-three/drei'
 import * as THREE from 'three'
 
 // Orbital ring component
@@ -89,8 +89,8 @@ function OrbitingNeuron({
       const mat = meshRef.current.material as THREE.MeshBasicMaterial
       mat.color.copy(tempColor.current)
       
-      // Report position for connection lines
-      onPositionUpdate(index, meshRef.current.position.clone())
+      // Report position for connection lines (no clone — handler uses .copy())
+      onPositionUpdate(index, meshRef.current.position)
     }
   })
 
@@ -102,49 +102,104 @@ function OrbitingNeuron({
   )
 }
 
-// Neural connections between particles
-function NeuralConnections({ positions }: { positions: THREE.Vector3[] }) {
-  const connections = useMemo(() => {
-    const lines: { start: THREE.Vector3; end: THREE.Vector3; opacity: number }[] = []
-    const connectionDistance = 2.5
-    
+// Neural connections between particles — imperative buffer updates, no React re-renders
+function NeuralConnections({
+  positionsRef,
+  count,
+}: {
+  positionsRef: React.RefObject<THREE.Vector3[]>
+  count: number
+}) {
+  const linesRef = useRef<THREE.LineSegments>(null!)
+  const maxConnections = (count * (count - 1)) / 2
+  const connectionDistance = 2.5
+
+  // Pre-allocate typed arrays once
+  const positionArray = useMemo(
+    () => new Float32Array(maxConnections * 6),
+    [maxConnections],
+  )
+
+  useFrame(() => {
+    if (!linesRef.current) return
+    const positions = positionsRef.current
+    if (!positions || positions.length < 2) return
+
+    const geo = linesRef.current.geometry
+    const arr = geo.attributes.position.array as Float32Array
+
+    let idx = 0
     for (let i = 0; i < positions.length; i++) {
       for (let j = i + 1; j < positions.length; j++) {
         const dist = positions[i].distanceTo(positions[j])
-        if (dist < connectionDistance) {
-          const opacity = Math.max(0.1, 0.5 * (1 - dist / connectionDistance))
-          lines.push({
-            start: positions[i],
-            end: positions[j],
-            opacity
-          })
+        if (dist < connectionDistance && idx < maxConnections) {
+          const off = idx * 6
+          arr[off] = positions[i].x
+          arr[off + 1] = positions[i].y
+          arr[off + 2] = positions[i].z
+          arr[off + 3] = positions[j].x
+          arr[off + 4] = positions[j].y
+          arr[off + 5] = positions[j].z
+          idx++
         }
       }
     }
-    return lines
-  }, [positions])
+
+    // Zero-out any leftover segments from previous frame
+    for (let k = idx * 6; k < arr.length; k++) arr[k] = 0
+
+    geo.attributes.position.needsUpdate = true
+    geo.setDrawRange(0, idx * 2)
+  })
 
   return (
-    <>
-      {connections.map((conn, i) => (
-        <Line
-          key={i}
-          points={[conn.start, conn.end]}
-          color="#0077cc"
-          lineWidth={1}
-          transparent
-          opacity={conn.opacity}
+    <lineSegments ref={linesRef} frustumCulled={false}>
+      <bufferGeometry>
+        <bufferAttribute
+          attach="attributes-position"
+          count={maxConnections * 2}
+          array={positionArray}
+          itemSize={3}
         />
-      ))}
-    </>
+      </bufferGeometry>
+      <lineBasicMaterial color="#0077cc" transparent opacity={0.3} />
+    </lineSegments>
+  )
+}
+
+// "Think Inside the Box" — translucent wireframe container
+function WireframeBox() {
+  const ref = useRef<THREE.Mesh>(null!)
+
+  useFrame((state) => {
+    if (ref.current) {
+      const t = state.clock.elapsedTime
+      ref.current.rotation.y = t * 0.08
+      ref.current.rotation.x = Math.sin(t * 0.15) * 0.05
+    }
+  })
+
+  const BOX_SIZE = 5.5
+
+  return (
+    <mesh ref={ref}>
+      <boxGeometry args={[BOX_SIZE, BOX_SIZE, BOX_SIZE]} />
+      <meshBasicMaterial transparent opacity={0} />
+      <Edges
+        scale={1}
+        threshold={15}
+        color="#0077cc"
+      >
+        <meshBasicMaterial transparent opacity={0.15} color="#0077cc" />
+      </Edges>
+    </mesh>
   )
 }
 
 export function MemorySphere() {
   const groupRef = useRef<THREE.Group>(null!)
-  const [particlePositions, setParticlePositions] = useState<THREE.Vector3[]>([])
-  
-  // Generate neuron particles data
+
+  // Generate neuron particles data (stable across renders)
   const neurons = useMemo(() => 
     Array.from({ length: 18 }, () => ({
       radius: 1.8 + Math.random() * 1.5,
@@ -153,18 +208,12 @@ export function MemorySphere() {
     }))
   , [])
 
-  // Initialize positions array
-  useMemo(() => {
-    setParticlePositions(neurons.map(() => new THREE.Vector3()))
-  }, [neurons])
+  // Positions stored in a ref — mutated imperatively, never triggers re-renders
+  const positionsRef = useRef<THREE.Vector3[]>(neurons.map(() => new THREE.Vector3()))
 
-  const handlePositionUpdate = (index: number, pos: THREE.Vector3) => {
-    setParticlePositions(prev => {
-      const newPositions = [...prev]
-      newPositions[index] = pos
-      return newPositions
-    })
-  }
+  const handlePositionUpdate = useCallback((index: number, pos: THREE.Vector3) => {
+    positionsRef.current[index].copy(pos)
+  }, [])
 
   useFrame((state) => {
     if (groupRef.current) {
@@ -261,10 +310,8 @@ export function MemorySphere() {
           />
         ))}
 
-        {/* Neural connections between particles */}
-        {particlePositions.length > 0 && (
-          <NeuralConnections positions={particlePositions} />
-        )}
+        {/* Neural connections between particles — reads from ref, zero re-renders */}
+        <NeuralConnections positionsRef={positionsRef} count={neurons.length} />
 
         {/* Sparkles around the sphere */}
         <Sparkles 
@@ -283,6 +330,9 @@ export function MemorySphere() {
           opacity={0.6}
           color="#8b5cf6"
         />
+
+        {/* "Think Inside the Box" wireframe container */}
+        <WireframeBox />
       </group>
     </Float>
   )
