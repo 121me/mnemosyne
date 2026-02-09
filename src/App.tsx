@@ -1,7 +1,7 @@
 import { Suspense, useRef, useEffect } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
-import { motion, useScroll, useTransform } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { NeuralNetwork } from './components/NeuralNetwork'
 import { MemorySphere } from './components/MemorySphere'
 import { PowerInterestMatrix } from './components/PowerInterestMatrix'
@@ -125,8 +125,7 @@ const personas = [
     gain: 'To stand inside her first studio apartment one last time. To feel the spatial volume of her past.',
     frustrations: 'The "fog" in her head. When people correct her stories. Being treated like a child.',
     goal: 'To have one moment of perfect clarity before the end.',
-    color: 'purple',
-    avatar: 'E'
+    color: 'purple'
   },
   {
     id: 'julian',
@@ -142,8 +141,7 @@ const personas = [
     gain: 'Believes he is saving human culture from extinction. Sees himself as a curator of the soul.',
     frustrations: 'Families who demand "happy endings" for traumatic memories. The limits of the Anamnese reconstruction engine (4D Gaussian Splatting).',
     goal: 'To create the perfect "Synthesis"—a memory indistinguishable from reality, yet safe for the user.',
-    color: 'cyan',
-    avatar: 'J'
+    color: 'cyan'
   },
   {
     id: 'aris',
@@ -159,8 +157,7 @@ const personas = [
     gain: 'Establishing the "Cognitive Bill of Rights." Protecting vulnerable data from being sold to advertisers.',
     frustrations: 'The speed of AI development vs. the slowness of legislation. Mnemosyne\'s "black box" algorithms.',
     goal: 'Ensure Mnemosyne remains a "Trust" and doesn\'t become a "Market."',
-    color: 'green',
-    avatar: 'A'
+    color: 'green'
   },
   {
     id: 'zoe',
@@ -176,8 +173,7 @@ const personas = [
     gain: 'Breaking the story on how "Therapeutic Mercy" is actually just rewriting history to be more palatable.',
     frustrations: 'The PR spin of "saving heritage." The difficulty of verifying if a reconstructed memory is true.',
     goal: 'To expose the glitches in the system. To ask: "Is a fake happy memory better than a real sad one?"',
-    color: 'gold',
-    avatar: 'Z'
+    color: 'gold'
   }
 ]
 
@@ -744,15 +740,6 @@ function Content() {
                 whileHover={cardHover}
               >
                 <div className="persona-header">
-                  <motion.div
-                    className={`persona-avatar avatar-${persona.color}`}
-                    initial={{ scale: 0, rotate: -180 }}
-                    whileInView={{ scale: 1, rotate: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ type: 'spring' as const, stiffness: 200, damping: 15, delay: 0.3 }}
-                  >
-                    {persona.avatar}
-                  </motion.div>
                   <div className="persona-identity">
                     <h3>{persona.name} <span className="persona-age">({persona.age})</span></h3>
                     <span className="persona-role">{persona.role}</span>
@@ -943,7 +930,7 @@ function Content() {
             viewport={{ once: true }}
             transition={{ duration: 0.7, delay: 0.25 }}
           >
-            Saarbrücken • Tokyo • The Cloud
+            Saarbrücken • The Cloud
           </motion.p>
           <motion.div
             className="footer-techstack"
